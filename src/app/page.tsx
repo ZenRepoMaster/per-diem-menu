@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LocationSelector } from "@/components/location-selector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,11 +19,19 @@ export default function Home() {
       {/* Main content - Mobile first */}
       <main className="flex-1 px-4 py-6 sm:container sm:px-6 sm:py-8">
         <div className="mx-auto w-full max-w-3xl space-y-6 sm:space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold sm:text-3xl">UI Foundation Test</h2>
-            <p className="text-sm text-muted-foreground sm:text-base">
-              Testing shadcn/ui components and dark mode
-            </p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold sm:text-3xl">Location Selector Test</h2>
+              <p className="text-sm text-muted-foreground sm:text-base">
+                Testing location selector with localStorage persistence
+              </p>
+            </div>
+            
+            {/* Location Selector */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Select Location</p>
+              <LocationSelector />
+            </div>
           </div>
 
           {/* Component showcase - Stacks on mobile */}
@@ -84,17 +93,20 @@ export default function Home() {
           {/* Instructions */}
           <Card>
             <CardHeader>
-              <CardTitle>Next Steps</CardTitle>
+              <CardTitle>Testing Instructions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-sm">
-                ✅ UI Foundation components are set up
+                ✅ Location selector loads locations from API
               </p>
               <p className="text-sm">
-                ✅ Dark mode toggle is working (top right)
+                ✅ Selected location persists in localStorage
               </p>
               <p className="text-sm">
-                ⏭️ Next: Create location selector component
+                ✅ Refresh page to verify persistence
+              </p>
+              <p className="text-sm">
+                ⏭️ Next: Create menu display components
               </p>
             </CardContent>
           </Card>
