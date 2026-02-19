@@ -23,10 +23,10 @@ export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
  * Format a log entry for console output
  */
 function formatLogEntry(entry: LogEntry): string {
-  const statusEmoji = entry.statusCode >= 400 ? '❌' : '✅';
-  const durationColor = entry.duration > 1000 ? '🐢' : '⚡';
+  const statusIndicator = entry.statusCode >= 400 ? '[ERROR]' : '[OK]';
+  const durationIndicator = entry.duration > 1000 ? '[SLOW]' : '[FAST]';
   
-  return `[${entry.timestamp}] ${statusEmoji} ${entry.method} ${entry.path} - ${entry.statusCode} (${entry.duration}ms) ${durationColor}`;
+  return `[${entry.timestamp}] ${statusIndicator} ${entry.method} ${entry.path} - ${entry.statusCode} (${entry.duration}ms) ${durationIndicator}`;
 }
 
 /**
@@ -99,10 +99,10 @@ class RequestLogger {
     
     if (this.isDevelopment) {
       const prefix = {
-        info: 'ℹ️',
-        warn: '⚠️',
-        error: '🚨',
-        debug: '🔍',
+        info: '[INFO]',
+        warn: '[WARN]',
+        error: '[ERROR]',
+        debug: '[DEBUG]',
       }[level];
       
       console.log(`[${timestamp}] ${prefix} ${message}`);
