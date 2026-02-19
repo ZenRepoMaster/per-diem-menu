@@ -42,9 +42,12 @@ export function LocationSelector({
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         setSelectedLocationId(saved)
+        // Notify parent of initial selection
+        onLocationChange?.(saved)
       }
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount
 
   // Fetch locations from API (only once on mount)
   React.useEffect(() => {
