@@ -35,6 +35,7 @@ export function LocationSelector({
   const [selectedLocationId, setSelectedLocationId] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const [isClearing, setIsClearing] = React.useState(false)
 
   // Load selected location from localStorage on mount
   React.useEffect(() => {
@@ -94,6 +95,31 @@ export function LocationSelector({
 
   // Handle location selection change
   const handleValueChange = (value: string) => {
+    // Handle "clear" option
+    if (value === "__clear__") {
+      setIsClearing(true)
+      
+      // Clear state immediately
+      setSelectedLocationId(null)
+      
+      // Clear localStorage
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(STORAGE_KEY)
+      }
+      
+      // Notify parent component that location is cleared
+      onLocationChange?.(null)
+      
+      // Reset clearing flag after a brief delay to allow re-render
+      setTimeout(() => {
+        setIsClearing(false)
+      }, 100)
+      
+      return
+    }
+    
+    // Normal selection
+    setIsClearing(false)
     setSelectedLocationId(value)
     
     // Persist to localStorage
@@ -141,8 +167,12 @@ export function LocationSelector({
     )
   }
 
+  // Force re-render when clearing by using a key that changes
+  const selectKey = isClearing ? 'location-clearing' : (selectedLocationId ? `location-${selectedLocationId}` : 'location-empty')
+
   return (
     <Select
+      key={selectKey} // Force re-render when clearing
       value={selectedLocationId || undefined}
       onValueChange={handleValueChange}
     >
@@ -150,6 +180,11 @@ export function LocationSelector({
         <SelectValue placeholder="Select a location" />
       </SelectTrigger>
       <SelectContent>
+        {selectedLocationId && (
+          <SelectItem value="__clear__" className="text-muted-foreground">
+            Clear selection
+          </SelectItem>
+        )}
         {locations.map((location) => (
           <SelectItem key={location.id} value={location.id}>
             {location.name}

@@ -24,12 +24,29 @@ import { cache, CacheKeys, CacheTTL } from '@/lib/cache';
 import { logger, startTimer } from '@/lib/logger';
 import { handleApiError } from '@/lib/api-error';
 import { ApiLocationsResponse } from '@/types';
+import { isMockModeEnabled } from '@/lib/mock-mode';
+import { getMockLocations } from '@/lib/mock-data';
 
 export async function GET() {
   const getElapsed = startTimer();
   const path = '/api/locations';
   
   try {
+    // Check if mock mode is enabled
+    const mockMode = await isMockModeEnabled();
+    
+    if (mockMode) {
+      logger.logRequest({
+        method: 'GET',
+        path,
+        statusCode: 200,
+        duration: getElapsed(),
+      });
+      logger.debug('Returning mock locations');
+      
+      return NextResponse.json(getMockLocations());
+    }
+    
     // Check cache first
     const cached = cache.get<ApiLocationsResponse>(CacheKeys.locations());
     

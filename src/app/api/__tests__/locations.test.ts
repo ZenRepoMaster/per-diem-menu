@@ -36,6 +36,11 @@ jest.mock('@/lib/logger', () => ({
   startTimer: jest.fn(() => () => 100),
 }))
 
+// Mock mock-mode (mock mode disabled for tests)
+jest.mock('@/lib/mock-mode', () => ({
+  isMockModeEnabled: jest.fn().mockResolvedValue(false),
+}))
+
 describe('GET /api/locations', () => {
   beforeEach(() => {
     jest.clearAllMocks()

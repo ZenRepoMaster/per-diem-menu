@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle";
+import { MockModeToggle } from "@/components/mock-mode-toggle";
 import { LocationSelector } from "@/components/location-selector";
 import { MenuDisplay } from "@/components/menu-display";
 
@@ -15,7 +16,10 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center justify-between px-4 sm:container sm:h-16 sm:px-6">
           <h1 className="text-lg font-semibold sm:text-xl">Per Diem Menu</h1>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <MockModeToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
