@@ -64,12 +64,8 @@ export function LocationSelector({
         }
 
         const data = await response.json()
-        console.log("Locations API response:", data)
-        
         const locationsList = data.locations || []
         setLocations(locationsList)
-
-        console.log(`Loaded ${locationsList.length} locations`)
 
         // If we have a saved location ID, verify it still exists
         if (selectedLocationId) {
@@ -77,7 +73,6 @@ export function LocationSelector({
             (loc: ApiLocation) => loc.id === selectedLocationId
           )
           if (!locationExists) {
-            console.log("Saved location ID not found in API response, clearing")
             // Clear invalid saved location
             setSelectedLocationId(null)
             if (typeof window !== "undefined") {
@@ -88,7 +83,6 @@ export function LocationSelector({
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load locations"
         setError(message)
-        console.error("Error fetching locations:", err)
       } finally {
         setIsLoading(false)
       }

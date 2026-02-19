@@ -43,7 +43,7 @@ export function MenuItemCard({ item, className }: MenuItemCardProps) {
     : null
 
   return (
-    <Card className={cn("overflow-hidden transition-shadow hover:shadow-md", className)}>
+    <Card className={cn("overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02]", className)}>
       <div className="flex flex-col sm:flex-row">
         {/* Image Section */}
         {item.imageUrl && !imageError ? (

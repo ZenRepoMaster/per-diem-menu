@@ -47,7 +47,7 @@ export function SearchBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 transition-all duration-200 focus:ring-2"
           aria-label="Search menu items"
         />
         {value && (
