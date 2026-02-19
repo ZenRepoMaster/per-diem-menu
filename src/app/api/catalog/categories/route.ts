@@ -21,6 +21,8 @@ import { cache, CacheKeys, CacheTTL } from '@/lib/cache';
 import { logger, startTimer } from '@/lib/logger';
 import { handleApiError, validateRequiredParams } from '@/lib/api-error';
 import { ApiCategoriesResponse, ApiCategory } from '@/types';
+import { isMockModeEnabled } from '@/lib/mock-mode';
+import { getMockCatalog } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   const getElapsed = startTimer();
@@ -42,6 +44,25 @@ export async function GET(request: NextRequest) {
     }
     
     const locationId = searchParams.get('location_id')!;
+    
+    // Check if mock mode is enabled
+    const mockMode = await isMockModeEnabled();
+    
+    if (mockMode) {
+      const mockCatalog = getMockCatalog();
+      const response: ApiCategoriesResponse = { categories: mockCatalog.categories };
+      
+      logger.logRequest({
+        method: 'GET',
+        path,
+        statusCode: 200,
+        duration: getElapsed(),
+      });
+      logger.debug(`Returning mock categories for location: ${locationId}`);
+      
+      return NextResponse.json(response);
+    }
+    
     const cacheKey = CacheKeys.categories(locationId);
     
     // Check cache first

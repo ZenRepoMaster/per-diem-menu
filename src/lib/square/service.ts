@@ -114,12 +114,22 @@ function transformVariations(
 
 /**
  * Fetch all active locations from Square
+ * 
+ * Uses Square Locations API: https://developer.squareup.com/reference/square/locations-api/list-locations
+ * 
+ * Note: In Square Sandbox environment, there is typically one default test location
+ * ("Default Test Account"). To test with multiple locations, create additional
+ * locations via the Square Sandbox Seller Dashboard.
+ * 
+ * @returns Promise resolving to array of active locations
  */
 export async function fetchLocations(): Promise<ApiLocation[]> {
   const locationsApi = getLocationsApi();
   
   logger.debug('Fetching locations from Square API');
   
+  // Square Locations API: list() returns all locations for the merchant
+  // Reference: https://developer.squareup.com/reference/square/locations-api/list-locations
   const result = await locationsApi.list();
   
   if (result.errors && result.errors.length > 0) {
@@ -130,6 +140,7 @@ export async function fetchLocations(): Promise<ApiLocation[]> {
   const locations = result.locations ?? [];
   
   // Filter to only active locations and transform
+  // Square API returns locations with status: 'ACTIVE' | 'INACTIVE'
   const activeLocations = locations
     .filter(loc => loc.status === 'ACTIVE')
     .map(transformLocation);
