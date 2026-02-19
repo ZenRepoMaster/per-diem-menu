@@ -3,6 +3,7 @@
 import * as React from "react"
 import { CategoryNavigation } from "@/components/category-navigation"
 import { MenuItemCard } from "@/components/menu-item-card"
+import { SearchBar, filterMenuItems } from "@/components/search-bar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiCatalogResponse, ApiMenuItem } from "@/types"
 
@@ -23,6 +24,7 @@ interface MenuDisplayProps {
 export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
   const [catalog, setCatalog] = React.useState<ApiCatalogResponse | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -55,8 +57,9 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
         
         setCatalog(data)
         
-        // Reset category selection when catalog changes
+        // Reset category selection and search when catalog changes
         setSelectedCategoryId(null)
+        setSearchQuery("")
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load menu"
         setError(message)
@@ -69,17 +72,27 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
     fetchCatalog()
   }, [locationId])
 
-  // Get filtered items based on selected category
+  // Get filtered items based on selected category and search query
   const getFilteredItems = (): ApiMenuItem[] => {
     if (!catalog) return []
     
+    let items: ApiMenuItem[] = []
+    
+    // First filter by category
     if (selectedCategoryId === null) {
       // Show all items
-      return Object.values(catalog.itemsByCategory).flat()
+      items = Object.values(catalog.itemsByCategory).flat()
+    } else {
+      // Show items for selected category
+      items = catalog.itemsByCategory[selectedCategoryId] || []
     }
     
-    // Show items for selected category
-    return catalog.itemsByCategory[selectedCategoryId] || []
+    // Then filter by search query
+    if (searchQuery.trim()) {
+      items = filterMenuItems(items, searchQuery)
+    }
+    
+    return items
   }
 
   const filteredItems = getFilteredItems()
@@ -89,6 +102,7 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
     return (
       <div className={className}>
         <div className="space-y-4">
+          <Skeleton className="h-11 w-full" />
           <Skeleton className="h-11 w-full" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
@@ -161,16 +175,37 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
   if (filteredItems.length === 0) {
     return (
       <div className={className}>
-        <CategoryNavigation
-          categories={catalog.categories}
-          selectedCategoryId={selectedCategoryId}
-          onCategoryChange={setSelectedCategoryId}
+        {/* Search Bar */}
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
           className="mb-6"
         />
+        
+        {/* Category Navigation */}
+        {catalog.categories.length > 0 && (
+          <CategoryNavigation
+            categories={catalog.categories}
+            selectedCategoryId={selectedCategoryId}
+            onCategoryChange={setSelectedCategoryId}
+            className="mb-6"
+          />
+        )}
+        
         <div className="rounded-lg border bg-muted p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            No items found in this category
+            {searchQuery.trim()
+              ? `No items found matching "${searchQuery}"`
+              : "No items found in this category"}
           </p>
+          {searchQuery.trim() && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="mt-2 text-xs text-primary underline hover:no-underline touch-manipulation"
+            >
+              Clear search
+            </button>
+          )}
         </div>
       </div>
     )
@@ -178,6 +213,13 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
 
   return (
     <div className={className}>
+      {/* Search Bar */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        className="mb-6"
+      />
+      
       {/* Category Navigation */}
       {catalog.categories.length > 0 && (
         <CategoryNavigation
@@ -198,7 +240,16 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
       {/* Item count */}
       <div className="mt-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredItems.length} of {catalog.totalItems} items
+          {searchQuery.trim() ? (
+            <>
+              Showing {filteredItems.length} result{filteredItems.length !== 1 ? "s" : ""} for "{searchQuery}"
+              {filteredItems.length < catalog.totalItems && (
+                <> of {catalog.totalItems} total items</>
+              )}
+            </>
+          ) : (
+            <>Showing {filteredItems.length} of {catalog.totalItems} items</>
+          )}
         </p>
       </div>
     </div>
