@@ -41,9 +41,15 @@ export function EmptyState({
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-foreground">{title}</h3>
           {description && (
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              {description}
-            </p>
+            typeof description === 'string' ? (
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {description}
+              </p>
+            ) : (
+              <div className="text-sm text-muted-foreground max-w-md mx-auto">
+                {description}
+              </div>
+            )
           )}
         </div>
         {action && <div className="mt-2">{action}</div>}
