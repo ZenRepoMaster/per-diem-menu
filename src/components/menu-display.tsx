@@ -4,6 +4,13 @@ import * as React from "react"
 import { CategoryNavigation } from "@/components/category-navigation"
 import { MenuItemCard } from "@/components/menu-item-card"
 import { SearchBar, filterMenuItems } from "@/components/search-bar"
+import { ErrorState } from "@/components/error-state"
+import {
+  EmptySearchResults,
+  EmptyCategory,
+  EmptyCatalog,
+  EmptyLocation,
+} from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiCatalogResponse, ApiMenuItem } from "@/types"
 
@@ -31,7 +38,6 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
   // Fetch catalog when location changes
   React.useEffect(() => {
     if (!locationId) {
-      console.log("MenuDisplay: No locationId provided")
       setCatalog(null)
       setError(null)
       return
@@ -42,19 +48,14 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
         setIsLoading(true)
         setError(null)
 
-        console.log(`MenuDisplay: Fetching catalog for location: ${locationId}`)
         const response = await fetch(`/api/catalog?location_id=${locationId}`)
         
         if (!response.ok) {
           const errorText = await response.text()
-          console.error(`MenuDisplay: API error ${response.status}:`, errorText)
           throw new Error(`Failed to fetch catalog: ${response.status} ${response.statusText}. ${errorText}`)
         }
 
         const data = await response.json()
-        console.log("MenuDisplay: Catalog API response:", data)
-        console.log(`MenuDisplay: Total items: ${data.totalItems}, Categories: ${data.categories?.length || 0}`)
-        
         setCatalog(data)
         
         // Reset category selection and search when catalog changes
@@ -63,7 +64,6 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load menu"
         setError(message)
-        console.error("MenuDisplay: Error fetching catalog:", err)
       } finally {
         setIsLoading(false)
       }
@@ -118,15 +118,14 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
   if (error) {
     return (
       <div className={className}>
-        <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
-          <p className="text-sm font-medium text-destructive">{error}</p>
-          <button
-            onClick={() => locationId && window.location.reload()}
-            className="mt-2 text-xs text-destructive underline hover:no-underline touch-manipulation"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorState
+          message={error}
+          onRetry={() => {
+            if (locationId) {
+              window.location.reload()
+            }
+          }}
+        />
       </div>
     )
   }
@@ -135,11 +134,7 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
   if (!locationId) {
     return (
       <div className={className}>
-        <div className="rounded-lg border bg-muted p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Please select a location to view the menu
-          </p>
-        </div>
+        <EmptyLocation />
       </div>
     )
   }
@@ -148,25 +143,7 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
   if (!catalog || catalog.totalItems === 0) {
     return (
       <div className={className}>
-        <div className="rounded-lg border bg-muted p-8 text-center space-y-3">
-          <p className="text-sm font-medium text-foreground">
-            No menu items available for this location
-          </p>
-          <div className="text-xs text-muted-foreground space-y-2 max-w-md mx-auto">
-            <p>
-              The Square Sandbox location doesn't have any catalog items yet.
-            </p>
-            <p>
-              To add menu items:
-            </p>
-            <ol className="list-decimal list-inside space-y-1 text-left">
-              <li>Go to <a href="https://squareupsandbox.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Square Sandbox Seller Dashboard</a></li>
-              <li>Navigate to Items &gt; Catalog</li>
-              <li>Add items and assign them to this location</li>
-              <li>Refresh this page to see the menu</li>
-            </ol>
-          </div>
-        </div>
+        <EmptyCatalog />
       </div>
     )
   }
@@ -192,21 +169,17 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
           />
         )}
         
-        <div className="rounded-lg border bg-muted p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {searchQuery.trim()
-              ? `No items found matching "${searchQuery}"`
-              : "No items found in this category"}
-          </p>
-          {searchQuery.trim() && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="mt-2 text-xs text-primary underline hover:no-underline touch-manipulation"
-            >
-              Clear search
-            </button>
-          )}
-        </div>
+        {/* Empty State */}
+        {searchQuery.trim() ? (
+          <EmptySearchResults
+            query={searchQuery}
+            onClear={() => setSearchQuery("")}
+          />
+        ) : (
+          <EmptyCategory
+            onClearCategory={() => setSelectedCategoryId(null)}
+          />
+        )}
       </div>
     )
   }
@@ -232,8 +205,16 @@ export function MenuDisplay({ locationId, className }: MenuDisplayProps) {
 
       {/* Menu Items Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredItems.map((item) => (
-          <MenuItemCard key={item.id} item={item} />
+        {filteredItems.map((item, index) => (
+          <div
+            key={item.id}
+            className="animate-fade-in-up"
+            style={{
+              animationDelay: `${Math.min(index * 50, 300)}ms`,
+            }}
+          >
+            <MenuItemCard item={item} />
+          </div>
         ))}
       </div>
 

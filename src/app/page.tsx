@@ -9,11 +9,6 @@ import { MenuDisplay } from "@/components/menu-display";
 export default function Home() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null)
 
-  // Debug: Log location changes
-  React.useEffect(() => {
-    console.log("Page: Selected location ID changed:", selectedLocationId)
-  }, [selectedLocationId])
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header with theme toggle - Mobile optimized */}
@@ -28,7 +23,7 @@ export default function Home() {
       <main className="flex-1 px-4 py-6 sm:container sm:px-6 sm:py-8">
         <div className="mx-auto w-full max-w-6xl space-y-6 sm:space-y-8">
           {/* Location Selector */}
-          <div className="space-y-2">
+          <div className="space-y-2 animate-in fade-in-50 duration-300">
             <p className="text-sm font-medium">Select Location</p>
             <LocationSelector
               onLocationChange={(locationId) => {
@@ -38,7 +33,9 @@ export default function Home() {
           </div>
 
           {/* Menu Display */}
-          <MenuDisplay locationId={selectedLocationId} />
+          <div className="animate-in fade-in-50 duration-500">
+            <MenuDisplay locationId={selectedLocationId} />
+          </div>
         </div>
       </main>
     </div>

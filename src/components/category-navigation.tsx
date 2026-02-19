@@ -39,7 +39,7 @@ export function CategoryNavigation({
   return (
     <div className={className}>
       <Tabs value={currentValue} onValueChange={handleValueChange}>
-        <TabsList className="w-full justify-start overflow-x-auto">
+        <TabsList className="w-full justify-start overflow-x-auto transition-all duration-200">
           <TabsTrigger value="all" className="min-w-fit">
             All
           </TabsTrigger>
