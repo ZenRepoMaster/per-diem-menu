@@ -71,15 +71,16 @@ export function SearchBar({
  * Filter menu items by search query
  * 
  * Searches in item name and description (case-insensitive).
+ * Preserves the full type of the input array.
  * 
  * @param items - Array of menu items to filter
  * @param query - Search query string
- * @returns Filtered array of menu items
+ * @returns Filtered array of menu items with preserved type
  */
-export function filterMenuItems(
-  items: Array<{ name: string; description: string }>,
+export function filterMenuItems<T extends { name: string; description: string }>(
+  items: T[],
   query: string
-): typeof items {
+): T[] {
   if (!query.trim()) {
     return items
   }
