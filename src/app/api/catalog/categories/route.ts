@@ -1,111 +1,54 @@
-/**
- * GET /api/catalog/categories
- * 
- * Fetch categories for a specific location from Square's Catalog API.
- * Returns only categories that have at least one item at the given location.
- * 
- * Query Parameters:
- * - location_id (required): The Square location ID to filter categories by
- * 
- * Response:
- * {
- *   categories: [
- *     { id: string, name: string, itemCount: number }
- *   ]
- * }
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchCategories } from '@/lib/square';
 import { cache, CacheKeys, CacheTTL } from '@/lib/cache';
-import { logger, startTimer } from '@/lib/logger';
-import { handleApiError, validateRequiredParams } from '@/lib/api-error';
-import { ApiCategoriesResponse, ApiCategory } from '@/types';
-import { isMockModeEnabled } from '@/lib/mock-mode';
+import { validateRequiredParams } from '@/lib/api-error';
+import { ApiCategoriesResponse } from '@/types';
 import { getMockCatalog } from '@/lib/mock-data';
+import {
+  createApiContext,
+  logResponse,
+  logError,
+  tryMockMode,
+  tryCache,
+} from '../../utils';
 
 export async function GET(request: NextRequest) {
-  const getElapsed = startTimer();
-  const path = '/api/catalog/categories';
+  const context = createApiContext(request);
   const searchParams = request.nextUrl.searchParams;
-  
+
   try {
-    // Validate required parameters
     const validation = validateRequiredParams(searchParams, ['location_id']);
     if (!validation.valid) {
-      logger.logRequest({
-        method: 'GET',
-        path,
-        statusCode: 400,
-        duration: getElapsed(),
-        error: 'Missing location_id parameter',
-      });
-      return validation.response;
+      return logResponse(validation.response, context, 'Missing location_id parameter');
     }
-    
+
     const locationId = searchParams.get('location_id')!;
-    
-    // Check if mock mode is enabled
-    const mockMode = await isMockModeEnabled();
-    
-    if (mockMode) {
-      const mockCatalog = getMockCatalog();
-      const response: ApiCategoriesResponse = { categories: mockCatalog.categories };
-      
-      logger.logRequest({
-        method: 'GET',
-        path,
-        statusCode: 200,
-        duration: getElapsed(),
-      });
-      logger.debug(`Returning mock categories for location: ${locationId}`);
-      
-      return NextResponse.json(response);
-    }
-    
+
+    const mockResponse = await tryMockMode(
+      () => {
+        const mockCatalog = getMockCatalog();
+        return { categories: mockCatalog.categories };
+      },
+      context,
+      `Returning mock categories for location: ${locationId}`
+    );
+    if (mockResponse) return mockResponse;
+
     const cacheKey = CacheKeys.categories(locationId);
-    
-    // Check cache first
-    const cached = cache.get<ApiCategoriesResponse>(cacheKey);
-    
-    if (cached) {
-      logger.logRequest({
-        method: 'GET',
-        path,
-        statusCode: 200,
-        duration: getElapsed(),
-      });
-      logger.debug(`Returning cached categories for location: ${locationId}`);
-      
-      return NextResponse.json(cached);
-    }
-    
-    // Fetch from Square API
-    const categories: ApiCategory[] = await fetchCategories(locationId);
-    
+    const cachedResponse = tryCache<ApiCategoriesResponse>(
+      cacheKey,
+      context,
+      `Returning cached categories for location: ${locationId}`
+    );
+    if (cachedResponse) return cachedResponse;
+
+    const categories = await fetchCategories(locationId);
     const response: ApiCategoriesResponse = { categories };
-    
-    // Cache the response
+
     cache.set(cacheKey, response, CacheTTL.CATEGORIES);
-    
-    logger.logRequest({
-      method: 'GET',
-      path,
-      statusCode: 200,
-      duration: getElapsed(),
-    });
-    
-    return NextResponse.json(response);
-    
+
+    return logResponse(NextResponse.json(response), context);
   } catch (error) {
-    logger.logRequest({
-      method: 'GET',
-      path,
-      statusCode: 500,
-      duration: getElapsed(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    
-    return handleApiError(error, path);
+    return logError(error, context);
   }
 }
